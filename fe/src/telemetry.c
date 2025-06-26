@@ -32,27 +32,41 @@ void telemetry_get_topology(device_topology_t *topo) {
                  g_topo.ranks, g_topo.channels_per_rank, g_topo.dies_per_channel);
 }
 
-int telemetry_get_smart_health(smart_health_info_t *health) {
-    if (!health) return -1;
-    fe_be_message_t req_msg, resp_msg;
-    req_msg.event_id = FE_CMD_GET_SMART_DATA;
-    
-    fe_log_print("Telemetry: Sending request for SMART data to BE.");
-    // 将请求发送给BE
-    UINT status = tx_queue_send(&fe_be_queue, &req_msg, TX_WAIT_FOREVER);
-    if (status != TX_SUCCESS) {
-        fe_log_print("Telemetry: Failed to send msg to BE queue.");
-        return -1;
-    }
-
-    // 等待BE的响应 (在真实系统中，这可能通过另一个队列完成，此处简化)
-    status = tx_queue_receive(&fe_be_queue, &resp_msg, 500); // 等待5秒
-    if (status != TX_SUCCESS || resp_msg.event_id != BE_RESPONSE_SMART_DATA) {
-        fe_log_print("Telemetry: Did not receive valid SMART response from BE.");
-        return -1;
-    }
-
-    memcpy(health, resp_msg.payload, sizeof(smart_health_info_t));
-    fe_log_print("Telemetry: Received SMART data from BE. Temp=%dC", health->temperature_celsius);
-    return 0;
+int telemetry_get_smart_health(smart_health_info_t *health) {  
+    if (!health) return -1;  
+      
+    // 1. 直接读取传感器数据  
+    sensor_data_t sensor_data;  
+    if (sensor_get_all_data(&sensor_data) != FE_STATUS_SUCCESS) {  
+        return -1;  
+    }  
+      
+    // 填充传感器数据  
+    health->temperature = sensor_data.temperature_celsius;  
+    health->voltage_3v3 = sensor_data.voltage_3v3_mv;  
+    // ... 其他传感器数据  
+      
+    // 2. 向BE请求介质健康数据  
+    fe_be_message_t req_msg, resp_msg;  
+    req_msg.event_id = FE_CMD_GET_SMART_DATA;  
+      
+    UINT status = tx_queue_send(&fe_be_queue, &req_msg, TX_WAIT_FOREVER);  
+    if (status != TX_SUCCESS) {  
+        return -1;  
+    }  
+      
+    // 3. 等待BE响应  
+    status = tx_queue_receive(&fe_be_queue, &resp_msg, 500);  
+    if (status != TX_SUCCESS || resp_msg.event_id != BE_RESPONSE_SMART_DATA) {  
+        return -1;  
+    }  
+      
+    // 4. 合并BE返回的介质数据  
+    smart_health_info_t *be_health = (smart_health_info_t*)resp_msg.payload;  
+    health->read_retry_count = be_health->read_retry_count;  
+    health->write_retry_count = be_health->write_retry_count;  
+    health->media_health_level = be_health->media_health_level;  
+    // ... 其他介质数据  
+      
+    return 0;  
 }

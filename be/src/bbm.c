@@ -49,3 +49,58 @@ int bbm_retire_block(uint64_t physical_block_address) {
     be_log_print("BBM: Successfully retired block. Total bad blocks: %d.", g_bad_block_count);
     return 0;
 }
+
+// 坏块表读取  
+be_status_t bbm_read_table(uint32_t block_index, bbm_entry_t *entry) {  
+    if (!entry) {  
+        return BE_STATUS_INVALID_PARAM;  
+    }  
+      
+    // 计算坏块表在PCM中的位置  
+    uint64_t bbm_address = BBM_TABLE_BASE + (block_index * sizeof(bbm_entry_t));  
+      
+    // 从PCM读取坏块表项  
+    return pcm_read(bbm_address, (uint8_t*)entry, sizeof(bbm_entry_t));  
+}  
+  
+// 坏块标记  
+be_status_t bbm_mark_bad_block(uint32_t block_index) {  
+    bbm_entry_t entry;  
+      
+    // 读取当前表项  
+    be_status_t status = bbm_read_table(block_index, &entry);  
+    if (status != BE_STATUS_SUCCESS) {  
+        return status;  
+    }  
+      
+    // 标记为坏块  
+    entry.is_bad = true;  
+    entry.wear_count = 0xFFFFFFFF;  // 坏块不再计算磨损  
+      
+    // 写回PCM  
+    uint64_t bbm_address = BBM_TABLE_BASE + (block_index * sizeof(bbm_entry_t));  
+    return pcm_write(bbm_address, (const uint8_t*)&entry, sizeof(bbm_entry_t));  
+}  
+  
+// 磨损均衡更新  
+be_status_t bbm_update_wear_count(uint32_t block_index) {  
+    bbm_entry_t entry;  
+      
+    // 读取当前表项  
+    be_status_t status = bbm_read_table(block_index, &entry);  
+    if (status != BE_STATUS_SUCCESS) {  
+        return status;  
+    }  
+      
+    // 检查是否为坏块  
+    if (entry.is_bad) {  
+        return BE_STATUS_INVALID_OPERATION;  
+    }  
+      
+    // 增加磨损计数  
+    entry.wear_count++;  
+      
+    // 写回PCM  
+    uint64_t bbm_address = BBM_TABLE_BASE + (block_index * sizeof(bbm_entry_t));  
+    return pcm_write(bbm_address, (const uint8_t*)&entry, sizeof(bbm_entry_t));  
+}

@@ -83,5 +83,39 @@
 #define VAL_RD_GEN5_GEN3_RELATED_OFF      0x2002800
 #define VAL_RD_GEN5_GEN3_EQ_CONTROL_OFF   0x407ff31
 
+// CXL SCM 外设基地址定义  
+#define CXL_SCM_PERIPH_BASE         0x40000000  
+  
+// UART 寄存器定义 (PL011 兼容)  
+#define UART_BASE                   (CXL_SCM_PERIPH_BASE + 0x10000)  
+#define UART_DR                     (UART_BASE + 0x000)  // 数据寄存器  
+#define UART_RSR                    (UART_BASE + 0x004)  // 接收状态寄存器  
+#define UART_FR                     (UART_BASE + 0x018)  // 标志寄存器  
+#define UART_IBRD                   (UART_BASE + 0x024)  // 整数波特率分频器  
+#define UART_FBRD                   (UART_BASE + 0x028)  // 小数波特率分频器  
+#define UART_LCR_H                  (UART_BASE + 0x02C)  // 线控制寄存器  
+#define UART_CR                     (UART_BASE + 0x030)  // 控制寄存器  
+#define UART_IMSC                   (UART_BASE + 0x038)  // 中断屏蔽寄存器  
+#define UART_MIS                    (UART_BASE + 0x040)  // 屏蔽中断状态寄存器  
+#define UART_ICR                    (UART_BASE + 0x044)  // 中断清除寄存器  
+  
+// UART 标志位定义  
+#define UART_FR_TXFF                (1 << 5)  // 发送FIFO满  
+#define UART_FR_RXFE                (1 << 4)  // 接收FIFO空  
+#define UART_FR_BUSY                (1 << 3)  // UART忙  
+  
+// GPIO 寄存器定义  
+#define GPIO_BASE                   (CXL_SCM_PERIPH_BASE + 0x20000)  
+#define GPIO_DATA                   (GPIO_BASE + 0x000)  // 数据寄存器  
+#define GPIO_DIR                    (GPIO_BASE + 0x400)  // 方向寄存器  
+#define GPIO_IE                     (GPIO_BASE + 0x404)  // 中断使能寄存器  
+#define GPIO_RIS                    (GPIO_BASE + 0x414)  // 原始中断状态  
+#define GPIO_MIS                    (GPIO_BASE + 0x418)  // 屏蔽中断状态  
+#define GPIO_IC                     (GPIO_BASE + 0x41C)  // 中断清除  
+  
+// 寄存器访问宏  
+#define REG_READ(addr)              (*(volatile uint32_t*)(addr))  
+#define REG_WRITE(addr, val)        (*(volatile uint32_t*)(addr) = (val))  
+
 #endif /* HW_REGISTERS_H */
 

@@ -29,6 +29,24 @@ void be_main_thread_entry(ULONG thread_input) {
     tx_thread_create(&wl_thread, "Wear Leveling Task", wear_leveling_task, 0, wl_stack, 2048, 12, 12, TX_NO_TIME_SLICE, TX_AUTO_START);
     be_log_print("Background tasks (Patrol, WL) started.");
     
+    be_status_t status;  
+    // 初始化PCM控制器  
+    status = pcm_controller_init();  
+    if (status != BE_STATUS_SUCCESS) {  
+        // 错误处理  
+        return;  
+    }  
+    // 初始化其他BE组件  
+    status = media_manager_init();  
+    if (status != BE_STATUS_SUCCESS) {  
+        pcm_controller_deinit();  
+        return;  
+    }
+    // 通知FE初始化完成  
+    fe_be_message_t msg;  
+    msg.event_id = BE_EVENT_POWER_UP_DONE;  
+    tx_queue_send(&fe_be_queue, &msg, TX_WAIT_FOREVER); 
+
     // BE主线程循环，处理来自FE的消息
     while(1) {
         fe_be_message_t received_msg;
@@ -58,31 +76,4 @@ void be_main_thread_entry(ULONG thread_input) {
             be_log_print("BE main loop: No message from FE. BG tasks running.");
         }
     }
-}
-
-
-/*
- * ============================================================================
- * 文件: be/src/address_translation.c (已更新)
- * ============================================================================
- */
-#include "be_common.h"
-#include "address_translation.h"
-#define MAPPING_TABLE_SIZE 1024 // 仅为
-static uint64_t g_mapping_table[MAPPING_TABLE_SIZE];
-
-void at_init(void) {
-    be_log_print("Address Translation (AT) module initialized.");
-    // 在真实系统中，地址翻译层(FTL)非常复杂。它负责将主机的逻辑块地址(LBA)
-    // 映射到NAND的物理地址(PBA)。这个映射是动态的，因为磨损均衡和垃圾回收
-    // 会不断移动数据。这个表本身必须持久化存储。
-    for(int i = 0; i < MAPPING_TABLE_SIZE; ++i) { g_mapping_table[i] = i; }
-}
-
-int at_update_mapping(uint64_t lba, uint64_t new_pba) {
-    uint32_t index = lba % MAPPING_TABLE_SIZE;
-    be_log_print("AT: Updating mapping for LBA 0x%llx to new PBA 0x%llx.", lba, new_pba);
-    g_mapping_table[index] = new_pba;
-    be_log_print("AT: (Simulating) Persisting mapping update to NAND.");
-    return 0;
 }
