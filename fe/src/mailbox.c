@@ -7,6 +7,8 @@
 #include "fe_common.h"
 #include "mailbox.h"
 #include "cxl_defs.h"
+#include "telemetry.h"
+#include "fw_update.h"
 
 void mbox_init(void) {
     fe_log_print("mbox_poison_list_init, max records: %d", MAX_POISON_RECORDS);

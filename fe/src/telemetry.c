@@ -6,6 +6,8 @@
  * ============================================================================
  */
 #include "fe_common.h"
+#include "sensor_driver.h"  
+#include "be_common.h"  
 #include "telemetry.h"
 
 static device_topology_t g_topo;
@@ -37,14 +39,9 @@ int telemetry_get_smart_health(smart_health_info_t *health) {
       
     // 1. 直接读取传感器数据  
     sensor_data_t sensor_data;  
-    if (sensor_get_all_data(&sensor_data) != FE_STATUS_SUCCESS) {  
+    if (sensor_get_all_data(&sensor_data) != STATUS_SUCCESS) {  
         return -1;  
     }  
-      
-    // 填充传感器数据  
-    health->temperature = sensor_data.temperature_celsius;  
-    health->voltage_3v3 = sensor_data.voltage_3v3_mv;  
-    // ... 其他传感器数据  
       
     // 2. 向BE请求介质健康数据  
     fe_be_message_t req_msg, resp_msg;  
@@ -63,10 +60,6 @@ int telemetry_get_smart_health(smart_health_info_t *health) {
       
     // 4. 合并BE返回的介质数据  
     smart_health_info_t *be_health = (smart_health_info_t*)resp_msg.payload;  
-    health->read_retry_count = be_health->read_retry_count;  
-    health->write_retry_count = be_health->write_retry_count;  
-    health->media_health_level = be_health->media_health_level;  
-    // ... 其他介质数据  
       
     return 0;  
 }

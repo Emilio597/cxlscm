@@ -8,7 +8,9 @@
 #include "fe_common.h"
 #include "cxl_defs.h"
 #include "mailbox.h"
-
+#include "telemetry.h"
+#include "bbm.h"
+#include "fw_update.h"
 
 static void init_event_handling(void) {
     fe_log_print("None Valid Event, Start Init");
@@ -56,13 +58,7 @@ void fe_host_handshake_sequence(void) {
     smart_health_info_t health;
     mbox_command_handler(MBOX_CMD_GET_SMART_HEALTH, &health, sizeof(health));
 
-    // 3. 主机请求废弃一个坏块
-    tx_thread_sleep(500);
-    fe_log_print("Host is retiring a bad block...");
-    bbm_request_t bbm_req = { .opcode = BBM_OP_RETIRE_BLOCK, .logical_block_address = 0x1234567890ABCDEFULL };
-    mbox_command_handler(MBOX_CMD_MANAGE_BAD_BLOCK, &bbm_req, sizeof(bbm_req));
-
-    // 4. 主机发起固件更新流程
+    // 3. 主机发起固件更新流程
     tx_thread_sleep(1000);
     fe_log_print("Host is initiating firmware update...");
     fw_chunk_t chunk = { .sequence_number = 1, .size = 1024, .checksum = 0xABCD };

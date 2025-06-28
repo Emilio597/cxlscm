@@ -6,20 +6,20 @@
 static uint32_t g_erase_counts[WEAR_LEVEL_BLOCK_COUNT];
 
 // 介质管理器初始化  
-be_status_t media_manager_init(void) {  
+status_t media_manager_init(void) {  
     // 初始化PCM控制器  
-    be_status_t status = pcm_controller_init();  
-    if (status != BE_STATUS_SUCCESS) {  
+    status_t status = pcm_controller_init();  
+    if (status != STATUS_SUCCESS) {  
         return status;  
     }  
       
     // 其他初始化逻辑...  
-    return BE_STATUS_SUCCESS;  
+    return STATUS_SUCCESS;  
 }  
 
-be_status_t media_read(uint64_t lba, uint32_t sector_count, uint8_t *buffer) {  
+status_t media_read(uint64_t lba, uint32_t sector_count, uint8_t *buffer) {  
     if (!buffer || sector_count == 0) {  
-        return BE_STATUS_INVALID_PARAM;  
+        return STATUS_INVALID_PARAM;  
     }  
       
     // 计算PCM物理地址 (假设每个扇区512字节)  
@@ -30,9 +30,9 @@ be_status_t media_read(uint64_t lba, uint32_t sector_count, uint8_t *buffer) {
     return pcm_read(pcm_address, buffer, read_size);  
 }  
   
-be_status_t media_write(uint64_t lba, uint32_t sector_count, const uint8_t *buffer) {  
+status_t media_write(uint64_t lba, uint32_t sector_count, const uint8_t *buffer) {  
     if (!buffer || sector_count == 0) {  
-        return BE_STATUS_INVALID_PARAM;  
+        return STATUS_INVALID_PARAM;  
     }  
       
     // 计算PCM物理地址  
@@ -44,7 +44,7 @@ be_status_t media_write(uint64_t lba, uint32_t sector_count, const uint8_t *buff
 }  
   
 // 介质擦除操作  
-be_status_t media_erase(uint64_t lba, uint32_t sector_count) {  
+status_t media_erase(uint64_t lba, uint32_t sector_count) {  
     // 计算块地址 (假设块大小4KB)  
     uint64_t block_address = (lba * 512) & ~(4096 - 1);  // 对齐到4KB边界  
       

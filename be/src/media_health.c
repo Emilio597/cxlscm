@@ -1,11 +1,10 @@
-#include "be_common.h"  
 #include "media_health.h"  
   
 static media_health_stats_t g_media_stats = {0};  
 static bool health_initialized = false;  
   
 // 介质健康管理初始化  
-be_status_t media_health_init(void) {  
+status_t media_health_init(void) {  
     memset(&g_media_stats, 0, sizeof(g_media_stats));  
     g_media_stats.spare_block_count = 100;  // 初始备用块数量  
     g_media_stats.health_level = MEDIA_HEALTH_EXCELLENT;  
@@ -13,13 +12,13 @@ be_status_t media_health_init(void) {
     health_initialized = true;  
       
     be_log_print("Media health management initialized.");  
-    return BE_STATUS_SUCCESS;  
+    return STATUS_SUCCESS;  
 }  
   
 // 更新读取统计  
-be_status_t media_health_update_read_stats(bool success, uint32_t retry_count) {  
+status_t media_health_update_read_stats(bool success, uint32_t retry_count) {  
     if (!health_initialized) {  
-        return BE_STATUS_NOT_INITIALIZED;  
+        return STATUS_NOT_INITIALIZED;  
     }  
       
     g_media_stats.total_read_count++;  
@@ -27,13 +26,13 @@ be_status_t media_health_update_read_stats(bool success, uint32_t retry_count) {
         g_media_stats.read_retry_count += retry_count;  
     }  
       
-    return BE_STATUS_SUCCESS;  
+    return STATUS_SUCCESS;  
 }  
   
 // 更新写入统计  
-be_status_t media_health_update_write_stats(bool success, uint32_t retry_count) {  
+status_t media_health_update_write_stats(bool success, uint32_t retry_count) {  
     if (!health_initialized) {  
-        return BE_STATUS_NOT_INITIALIZED;  
+        return STATUS_NOT_INITIALIZED;  
     }  
       
     g_media_stats.total_write_count++;  
@@ -41,13 +40,13 @@ be_status_t media_health_update_write_stats(bool success, uint32_t retry_count) 
         g_media_stats.write_retry_count += retry_count;  
     }  
       
-    return BE_STATUS_SUCCESS;  
+    return STATUS_SUCCESS;  
 }  
   
 // 更新ECC统计  
-be_status_t media_health_update_ecc_stats(uint32_t correctable, uint32_t uncorrectable) {  
+status_t media_health_update_ecc_stats(uint32_t correctable, uint32_t uncorrectable) {  
     if (!health_initialized) {  
-        return BE_STATUS_NOT_INITIALIZED;  
+        return STATUS_NOT_INITIALIZED;  
     }  
       
     g_media_stats.ecc_correctable_errors += correctable;  
@@ -56,13 +55,13 @@ be_status_t media_health_update_ecc_stats(uint32_t correctable, uint32_t uncorre
     // 更新健康等级  
     g_media_stats.health_level = media_health_calculate_level();  
       
-    return BE_STATUS_SUCCESS;  
+    return STATUS_SUCCESS;  
 }  
   
 // 更新磨损统计  
-be_status_t media_health_update_wear_stats(uint32_t block_index, uint32_t wear_count) {  
+status_t media_health_update_wear_stats(uint32_t block_index, uint32_t wear_count) {  
     if (!health_initialized) {  
-        return BE_STATUS_NOT_INITIALIZED;  
+        return STATUS_NOT_INITIALIZED;  
     }  
       
     // 更新最大磨损次数  
@@ -82,7 +81,7 @@ be_status_t media_health_update_wear_stats(uint32_t block_index, uint32_t wear_c
         g_media_stats.remaining_life_percent = 0;  
     }  
       
-    return BE_STATUS_SUCCESS;  
+    return STATUS_SUCCESS;  
 }
 
 // 计算健康等级  
@@ -136,9 +135,9 @@ media_health_level_t media_health_calculate_level(void) {
 }  
   
 // 获取介质统计信息  
-be_status_t media_health_get_stats(media_health_stats_t *stats) {  
+status_t media_health_get_stats(media_health_stats_t *stats) {  
     if (!health_initialized || !stats) {  
-        return BE_STATUS_INVALID_PARAM;  
+        return STATUS_INVALID_PARAM;  
     }  
       
     // 更新健康等级  
@@ -147,5 +146,5 @@ be_status_t media_health_get_stats(media_health_stats_t *stats) {
     // 复制统计信息  
     memcpy(stats, &g_media_stats, sizeof(media_health_stats_t));  
       
-    return BE_STATUS_SUCCESS;  
+    return STATUS_SUCCESS;  
 }

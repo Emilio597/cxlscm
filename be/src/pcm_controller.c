@@ -18,7 +18,7 @@ typedef struct {
 static pcm_controller_t pcm_ctrl = {0};  
   
 // PCM控制器初始化  
-be_status_t pcm_controller_init(void) {  
+status_t pcm_controller_init(void) {  
     // 软复位PCM控制器  
     REG_WRITE(PCM_CTRL, PCM_CTRL_RESET);  
       
@@ -54,43 +54,43 @@ be_status_t pcm_controller_init(void) {
     pcm_ctrl.wear_threshold = 1000000;   // 100万次写入阈值  
     pcm_ctrl.initialized = true;  
       
-    return BE_STATUS_SUCCESS;  
+    return STATUS_SUCCESS;  
 }  
   
 // 等待PCM就绪  
-static be_status_t pcm_wait_ready(uint32_t timeout_us) {  
+static status_t pcm_wait_ready(uint32_t timeout_us) {  
     uint32_t timeout = timeout_us;  
       
     while (timeout--) {  
         uint32_t status = REG_READ(PCM_STATUS);  
         if ((status & PCM_STATUS_READY) && !(status & PCM_STATUS_BUSY)) {  
-            return BE_STATUS_SUCCESS;  
+            return STATUS_SUCCESS;  
         }  
           
         // 检查错误状态  
         if (status & PCM_STATUS_ERROR) {  
-            return BE_STATUS_ERROR;  
+            return STATUS_ERROR;  
         }  
           
         // 1微秒延时  
         for (volatile int i = 0; i < 24; i++);  // 假设24MHz时钟  
     }  
       
-    return BE_STATUS_TIMEOUT;  
+    return STATUS_TIMEOUT;  
 }  
   
 // PCM读取操作  
-be_status_t pcm_read(uint64_t address, uint8_t *buffer, uint32_t size) {  
+status_t pcm_read(uint64_t address, uint8_t *buffer, uint32_t size) {  
     if (!pcm_ctrl.initialized || !buffer || size == 0) {  
-        return BE_STATUS_INVALID_PARAM;  
+        return STATUS_INVALID_PARAM;  
     }  
       
     // 检查地址范围  
     if (address + size > pcm_ctrl.total_capacity) {  
-        return BE_STATUS_OUT_OF_RANGE;  
+        return STATUS_OUT_OF_RANGE;  
     }  
       
-    be_status_t status;  
+    status_t status;  
     uint32_t remaining = size;  
     uint64_t current_addr = address;  
     uint8_t *current_buf = buffer;  
@@ -98,7 +98,7 @@ be_status_t pcm_read(uint64_t address, uint8_t *buffer, uint32_t size) {
     while (remaining > 0) {  
         // 等待PCM就绪  
         status = pcm_wait_ready(1000);  // 1ms超时  
-        if (status != BE_STATUS_SUCCESS) {  
+        if (status != STATUS_SUCCESS) {  
             return status;  
         }  
           
@@ -111,7 +111,7 @@ be_status_t pcm_read(uint64_t address, uint8_t *buffer, uint32_t size) {
           
         // 等待读取完成  
         status = pcm_wait_ready(pcm_ctrl.read_latency_ns / 1000 + 1);  
-        if (status != BE_STATUS_SUCCESS) {  
+        if (status != STATUS_SUCCESS) {  
             return status;  
         }  
           
@@ -128,21 +128,21 @@ be_status_t pcm_read(uint64_t address, uint8_t *buffer, uint32_t size) {
         remaining -= bytes_to_copy;  
     }  
       
-    return BE_STATUS_SUCCESS;  
+    return STATUS_SUCCESS;  
 }  
   
 // PCM写入操作  
-be_status_t pcm_write(uint64_t address, const uint8_t *buffer, uint32_t size) {  
+status_t pcm_write(uint64_t address, const uint8_t *buffer, uint32_t size) {  
     if (!pcm_ctrl.initialized || !buffer || size == 0) {  
-        return BE_STATUS_INVALID_PARAM;  
+        return STATUS_INVALID_PARAM;  
     }  
       
     // 检查地址范围  
     if (address + size > pcm_ctrl.total_capacity) {  
-        return BE_STATUS_OUT_OF_RANGE;  
+        return STATUS_OUT_OF_RANGE;  
     }  
       
-    be_status_t status;  
+    status_t status;  
     uint32_t remaining = size;  
     uint64_t current_addr = address;  
     const uint8_t *current_buf = buffer;  
@@ -150,14 +150,14 @@ be_status_t pcm_write(uint64_t address, const uint8_t *buffer, uint32_t size) {
     while (remaining > 0) {  
         // 等待PCM就绪  
         status = pcm_wait_ready(1000);  // 1ms超时  
-        if (status != BE_STATUS_SUCCESS) {  
+        if (status != STATUS_SUCCESS) {  
             return status;  
         }  
           
         // 检查热状态  
         uint32_t pcm_status = REG_READ(PCM_STATUS);  
         if (pcm_status & PCM_STATUS_THERMAL_ALERT) {  
-            return BE_STATUS_THERMAL_ERROR;  
+            return STATUS_THERMAL_ERROR;  
         }  
           
         // 设置地址  
@@ -179,7 +179,7 @@ be_status_t pcm_write(uint64_t address, const uint8_t *buffer, uint32_t size) {
           
         // 等待写入完成 (PCM写入需要更长时间)  
         status = pcm_wait_ready(pcm_ctrl.write_latency_ns / 1000 + 10);  
-        if (status != BE_STATUS_SUCCESS) {  
+        if (status != STATUS_SUCCESS) {  
             return status;  
         }  
           
@@ -188,18 +188,18 @@ be_status_t pcm_write(uint64_t address, const uint8_t *buffer, uint32_t size) {
         remaining -= bytes_to_write;  
     }  
       
-    return BE_STATUS_SUCCESS;  
+    return STATUS_SUCCESS;  
 }  
   
 // PCM SET/RESET操作 (相变存储器特有)  
-be_status_t pcm_set_reset_operation(uint64_t address, bool is_set) {  
+status_t pcm_set_reset_operation(uint64_t address, bool is_set) {  
     if (!pcm_ctrl.initialized) {  
-        return BE_STATUS_NOT_INITIALIZED;  
+        return STATUS_NOT_INITIALIZED;  
     }  
       
     // 等待PCM就绪  
-    be_status_t status = pcm_wait_ready(1000);  
-    if (status != BE_STATUS_SUCCESS) {  
+    status_t status = pcm_wait_ready(1000);  
+    if (status != STATUS_SUCCESS) {  
         return status;  
     }  
       
@@ -222,14 +222,14 @@ be_status_t pcm_set_reset_operation(uint64_t address, bool is_set) {
 
 
 // 获取PCM热状态  
-be_status_t pcm_get_thermal_status(uint32_t *temperature) {  
+status_t pcm_get_thermal_status(uint32_t *temperature) {  
     if (!pcm_ctrl.initialized || !temperature) {  
-        return BE_STATUS_INVALID_PARAM;  
+        return STATUS_INVALID_PARAM;  
     }  
       
     // 等待PCM就绪  
-    be_status_t status = pcm_wait_ready(1000);  
-    if (status != BE_STATUS_SUCCESS) {  
+    status_t status = pcm_wait_ready(1000);  
+    if (status != STATUS_SUCCESS) {  
         return status;  
     }  
       
@@ -238,25 +238,25 @@ be_status_t pcm_get_thermal_status(uint32_t *temperature) {
       
     // 等待读取完成  
     status = pcm_wait_ready(100);  
-    if (status != BE_STATUS_SUCCESS) {  
+    if (status != STATUS_SUCCESS) {  
         return status;  
     }  
       
     // 读取温度数据  
     *temperature = REG_READ(PCM_DATA) & 0xFF;  // 温度值在低8位  
       
-    return BE_STATUS_SUCCESS;  
+    return STATUS_SUCCESS;  
 }  
   
 // 获取PCM磨损均衡状态  
-be_status_t pcm_get_wear_level_status(uint32_t *wear_count) {  
+status_t pcm_get_wear_level_status(uint32_t *wear_count) {  
     if (!pcm_ctrl.initialized || !wear_count) {  
-        return BE_STATUS_INVALID_PARAM;  
+        return STATUS_INVALID_PARAM;  
     }  
       
     // 等待PCM就绪  
-    be_status_t status = pcm_wait_ready(1000);  
-    if (status != BE_STATUS_SUCCESS) {  
+    status_t status = pcm_wait_ready(1000);  
+    if (status != STATUS_SUCCESS) {  
         return status;  
     }  
       
@@ -265,30 +265,30 @@ be_status_t pcm_get_wear_level_status(uint32_t *wear_count) {
       
     // 等待读取完成  
     status = pcm_wait_ready(100);  
-    if (status != BE_STATUS_SUCCESS) {  
+    if (status != STATUS_SUCCESS) {  
         return status;  
     }  
       
     // 读取磨损计数  
     *wear_count = REG_READ(PCM_DATA);  
       
-    return BE_STATUS_SUCCESS;  
+    return STATUS_SUCCESS;  
 }  
   
 // PCM块擦除操作  
-be_status_t pcm_erase_block(uint64_t block_address) {  
+status_t pcm_erase_block(uint64_t block_address) {  
     if (!pcm_ctrl.initialized) {  
-        return BE_STATUS_NOT_INITIALIZED;  
+        return STATUS_NOT_INITIALIZED;  
     }  
       
     // 检查地址对齐  
     if (block_address % pcm_ctrl.block_size != 0) {  
-        return BE_STATUS_INVALID_PARAM;  
+        return STATUS_INVALID_PARAM;  
     }  
       
     // 等待PCM就绪  
-    be_status_t status = pcm_wait_ready(1000);  
-    if (status != BE_STATUS_SUCCESS) {  
+    status_t status = pcm_wait_ready(1000);  
+    if (status != STATUS_SUCCESS) {  
         return status;  
     }  
       
@@ -306,9 +306,9 @@ be_status_t pcm_erase_block(uint64_t block_address) {
 }  
   
 // PCM控制器去初始化  
-be_status_t pcm_controller_deinit(void) {  
+status_t pcm_controller_deinit(void) {  
     if (!pcm_ctrl.initialized) {  
-        return BE_STATUS_NOT_INITIALIZED;  
+        return STATUS_NOT_INITIALIZED;  
     }  
       
     // 禁用PCM控制器  
@@ -317,5 +317,5 @@ be_status_t pcm_controller_deinit(void) {
     // 清零控制结构  
     memset(&pcm_ctrl, 0, sizeof(pcm_ctrl));  
       
-    return BE_STATUS_SUCCESS;  
+    return STATUS_SUCCESS;  
 }

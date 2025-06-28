@@ -21,9 +21,9 @@ int at_update_mapping(uint64_t lba, uint64_t new_pba) {
 }
   
 // 地址转换表读取  
-be_status_t address_translation_read_table(uint32_t entry_index, address_map_entry_t *entry) {  
+status_t address_translation_read_table(uint32_t entry_index, address_map_entry_t *entry) {  
     if (!entry) {  
-        return BE_STATUS_INVALID_PARAM;  
+        return STATUS_INVALID_PARAM;  
     }  
       
     // 计算地址转换表在PCM中的位置  
@@ -34,9 +34,9 @@ be_status_t address_translation_read_table(uint32_t entry_index, address_map_ent
 }  
   
 // 地址转换表写入  
-be_status_t address_translation_write_table(uint32_t entry_index, const address_map_entry_t *entry) {  
+status_t address_translation_write_table(uint32_t entry_index, const address_map_entry_t *entry) {  
     if (!entry) {  
-        return BE_STATUS_INVALID_PARAM;  
+        return STATUS_INVALID_PARAM;  
     }  
       
     // 计算地址转换表在PCM中的位置  

@@ -43,13 +43,13 @@ typedef struct {
 } wl_statistics_t;  
   
 // 磨损均衡接口函数  
-be_status_t wl_init(void);  
-be_status_t wl_get_block_wear_info(uint32_t block_index, wl_block_info_t *info);  
-be_status_t wl_update_block_wear(uint32_t block_index, uint32_t new_wear_count);  
-be_status_t wl_find_cold_block(uint32_t *cold_block_index);  
-be_status_t wl_find_hot_block(uint32_t *hot_block_index);  
-be_status_t wl_perform_balance(uint32_t hot_block, uint32_t cold_block);  
-be_status_t wl_get_statistics(wl_statistics_t *stats);  
+status_t wl_init(void);  
+status_t wl_get_block_wear_info(uint32_t block_index, wl_block_info_t *info);  
+status_t wl_update_block_wear(uint32_t block_index, uint32_t new_wear_count);  
+status_t wl_find_cold_block(uint32_t *cold_block_index);  
+status_t wl_find_hot_block(uint32_t *hot_block_index);  
+status_t wl_perform_balance(uint32_t hot_block, uint32_t cold_block);  
+status_t wl_get_statistics(wl_statistics_t *stats);  
 void wl_scan_task(ULONG initial_input);  
 void wl_balance_task(ULONG initial_input);  
   

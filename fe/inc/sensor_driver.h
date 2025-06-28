@@ -3,7 +3,7 @@
   
 #include <stdint.h>  
 #include <stdbool.h>  
-  
+#include "firmware_common.h"
 // 传感器寄存器基地址  
 #define SENSOR_BASE                 (CXL_SCM_PERIPH_BASE + 0x300000)  
   
@@ -40,10 +40,10 @@ typedef struct {
 } sensor_data_t;  
   
 // 传感器接口函数  
-fe_status_t sensor_init(void);  
-fe_status_t sensor_read_temperature(uint32_t *temp_celsius);  
-fe_status_t sensor_read_voltages(uint32_t *v3v3, uint32_t *v1v8, uint32_t *v1v2);  
-fe_status_t sensor_read_currents(uint32_t *total_ma, uint32_t *pcm_ma);  
-fe_status_t sensor_get_all_data(sensor_data_t *data);  
+status_t sensor_init(void);  
+status_t sensor_read_temperature(uint32_t *temp_celsius);  
+status_t sensor_read_voltages(uint32_t *v3v3, uint32_t *v1v8, uint32_t *v1v2);  
+status_t sensor_read_currents(uint32_t *total_ma, uint32_t *pcm_ma);  
+status_t sensor_get_all_data(sensor_data_t *data);  
   
 #endif // SENSOR_DRIVER_H

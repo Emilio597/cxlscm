@@ -8,10 +8,12 @@
 #define FE_COMMON_H
 
 #include "tx_api.h" // ThreadX API
+#include "firmware_common.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdbool.h>
 
 /* FE状态机定义 (新增FW_UPDATE状态) */
 typedef enum {
@@ -63,7 +65,6 @@ typedef struct {
 
 /* 全局变量声明 */
 extern fe_control_t g_fe_ctrl;
-extern TX_THREAD fe_main_thread;
 extern TX_QUEUE be_to_fe_queue;
 
 /* 函数声明 */
@@ -88,6 +89,8 @@ void fe_power_up_sequence(void);
 void fe_cxl_initialization_sequence(void);
 void fe_host_handshake_sequence(void);
 void fe_media_status_monitor_task(void);
+void fe_process_be_message(fe_be_message_t *msg);  
+void fe_periodic_tasks(void);  
 
 #endif /* FE_COMMON_H */
 

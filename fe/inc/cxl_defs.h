@@ -9,7 +9,7 @@
 #define CXL_DEFS_H
 
 #include <stdint.h>
-typedef struct { uint32_t event_id; uint32_t payload[16]; } fe_be_message_t; // 增加payload大小
+
 #define BE_EVENT_POWER_UP_DONE    0xBE000001
 #define BE_RESPONSE_SMART_DATA    0xBE000002
 #define FE_CMD_GET_SMART_DATA     0xFE000001

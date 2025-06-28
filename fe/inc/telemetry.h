@@ -8,7 +8,7 @@
 #define TELEMETRY_H
 
 #include <stdint.h>
-
+#include "firmware_common.h"
 #define NUM_RANKS       4
 #define NUM_CHANNELS    4
 #define NUM_DIES        5
@@ -32,6 +32,6 @@ typedef struct {
 
 void telemetry_init(void);
 void telemetry_get_topology(device_topology_t *topo);
-void telemetry_get_smart_health(smart_health_info_t *health);
+int telemetry_get_smart_health(smart_health_info_t *health);
 
 #endif /* TELEMETRY_H */

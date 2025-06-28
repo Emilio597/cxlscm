@@ -7,10 +7,12 @@
 #include "fe_common.h"
 #include "hw_access.h"
 #include "mailbox.h"
+#include "sensor_driver.h"
+#include "telemetry.h"
+#include "fw_update.h"
 
 /* 全局变量定义 */
 fe_control_t g_fe_ctrl;
-TX_THREAD fe_main_thread;
 TX_QUEUE be_to_fe_queue;
 TX_BYTE_POOL fe_byte_pool;
 
@@ -153,44 +155,6 @@ void fe_handle_state_fw_update(void) {
 }
 
 
-/* ThreadX 应用程序定义 */
-void tx_application_define(void *first_unused_memory) {
-    UINT status;
-
-    // 创建字节池
-    status = tx_byte_pool_create(&fe_byte_pool, "FE Byte Pool", fe_byte_pool_memory, BYTE_POOL_SIZE);
-    if (status != TX_SUCCESS) return;
-
-    // 创建BE到FE的消息队列
-    status = tx_queue_create(&be_to_fe_queue, "BE to FE Queue", QUEUE_MESSAGE_SIZE,
-                             be_to_fe_queue_storage, QUEUE_LENGTH * sizeof(be_fe_message_t));
-    if (status != TX_SUCCESS) return;
-
-    // 创建FE主线程
-    status = tx_thread_create(&fe_main_thread, "FE Main Thread", fe_main_thread_entry, 0,
-                              fe_thread_stack, FE_THREAD_STACK_SIZE,
-                              5, 5, TX_NO_TIME_SLICE, TX_AUTO_START); // 优先级设为5
-    if (status != TX_SUCCESS) return;
-    
-    // (BE) 在启动后发送一条消息给FE
-    // 在真实场景中，这将由另一个处理器上的BE固件完成
-    TX_THREAD be_simulator_thread;
-    UCHAR be_sim_stack[1024];
-    tx_thread_create(&be_simulator_thread, "BE Simulator", 
-        [](ULONG) {
-            tx_thread_sleep(200); 
-            printf("BE: Power up sequence started...\n");
-            printf("BE: Blank Drive Format ...\n");
-            tx_thread_sleep(100);
-            printf("BE: BE power up restore done\n");
-            
-            be_fe_message_t msg;
-            msg.event_id = BE_EVENT_POWER_UP_DONE;
-            tx_queue_send(&be_to_fe_queue, &msg, TX_WAIT_FOREVER);
-        }, 
-        0, be_sim_stack, 1024, 6, 6, TX_NO_TIME_SLICE, TX_AUTO_START);
-}
-
 /* 日志和时间戳实现 */
 void fe_log_init(void) {
     tx_mutex_create(&g_fe_ctrl.log_mutex, "Log Mutex", TX_NO_INHERIT);
@@ -227,3 +191,59 @@ void fe_timestamp_update(void) {
     }
 }
 
+// 处理来自BE的消息  
+void fe_process_be_message(fe_be_message_t *msg) {  
+    if (!msg) return;  
+      
+    switch(msg->event_id) {  
+        case BE_EVENT_POWER_UP_DONE:  
+            fe_log_print("FE: Received power up done from BE");  
+            g_fe_ctrl.be_power_up_done = 1;  
+            // 可以触发状态转换  
+            if (g_fe_ctrl.state == FE_STATE_WAITING_FOR_BE) {  
+                g_fe_ctrl.state = FE_STATE_POWER_UP_INIT;  
+            }  
+            break;  
+              
+        case BE_RESPONSE_SMART_DATA:  
+            fe_log_print("FE: Received SMART data response from BE");  
+            // 处理SMART数据响应  
+            break;  
+              
+        case BE_EVENT_MEDIA_ERROR:  
+            fe_log_print("FE: Received media error notification from BE");  
+            // 处理介质错误通知  
+            break;  
+              
+        default:  
+            fe_log_print("FE: Received unknown event from BE: 0x%X", msg->event_id);  
+            break;  
+    }  
+}  
+  
+// FE周期性任务  
+void fe_periodic_tasks(void) {  
+    static uint32_t task_counter = 0;  
+    task_counter++;  
+      
+    // 每20次循环读取一次传感器数据  
+    if (task_counter % 20 == 0) {  
+        sensor_data_t sensor_data;  
+        if (sensor_get_all_data(&sensor_data) == STATUS_SUCCESS) {  
+            // 检查温度警告  
+            if (sensor_data.thermal_alert) {  
+                fe_log_print("FE: Thermal alert - temperature %d°C", sensor_data.temperature_celsius);  
+            }  
+              
+            // 检查电源状态  
+            if (!sensor_data.power_good) {  
+                fe_log_print("FE: Power supply warning detected");  
+            }  
+        }  
+    }  
+      
+    // 每100次循环输出状态信息  
+    if (task_counter % 100 == 0) {  
+        fe_log_print("FE: Periodic task cycle %d, state=%d", task_counter, g_fe_ctrl.state);  
+    }  
+}

@@ -1,6 +1,8 @@
 #include "be_common.h"
 #include "bbm.h"
+#include "pcm_controller.h"
 #include "address_translation.h"
+#include <stdio.h>
 
 #define SPARE_BLOCK_POOL_SIZE 100
 static uint64_t g_spare_blocks[SPARE_BLOCK_POOL_SIZE];
@@ -51,9 +53,9 @@ int bbm_retire_block(uint64_t physical_block_address) {
 }
 
 // 坏块表读取  
-be_status_t bbm_read_table(uint32_t block_index, bbm_entry_t *entry) {  
+status_t bbm_read_table(uint32_t block_index, bbm_entry_t *entry) {  
     if (!entry) {  
-        return BE_STATUS_INVALID_PARAM;  
+        return STATUS_INVALID_PARAM;  
     }  
       
     // 计算坏块表在PCM中的位置  
@@ -64,12 +66,12 @@ be_status_t bbm_read_table(uint32_t block_index, bbm_entry_t *entry) {
 }  
   
 // 坏块标记  
-be_status_t bbm_mark_bad_block(uint32_t block_index) {  
+status_t bbm_mark_bad_block(uint32_t block_index) {  
     bbm_entry_t entry;  
       
     // 读取当前表项  
-    be_status_t status = bbm_read_table(block_index, &entry);  
-    if (status != BE_STATUS_SUCCESS) {  
+    status_t status = bbm_read_table(block_index, &entry);  
+    if (status != STATUS_SUCCESS) {  
         return status;  
     }  
       
@@ -83,18 +85,18 @@ be_status_t bbm_mark_bad_block(uint32_t block_index) {
 }  
   
 // 磨损均衡更新  
-be_status_t bbm_update_wear_count(uint32_t block_index) {  
+status_t bbm_update_wear_count(uint32_t block_index) {  
     bbm_entry_t entry;  
       
     // 读取当前表项  
-    be_status_t status = bbm_read_table(block_index, &entry);  
-    if (status != BE_STATUS_SUCCESS) {  
+    status_t status = bbm_read_table(block_index, &entry);  
+    if (status != STATUS_SUCCESS) {  
         return status;  
     }  
       
     // 检查是否为坏块  
     if (entry.is_bad) {  
-        return BE_STATUS_INVALID_OPERATION;  
+        return STATUS_INVALID_OPERATION;  
     }  
       
     // 增加磨损计数  

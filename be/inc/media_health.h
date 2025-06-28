@@ -3,7 +3,7 @@
   
 #include <stdint.h>  
 #include <stdbool.h>  
-  
+#include "be_common.h"  
 // 介质健康等级  
 typedef enum {  
     MEDIA_HEALTH_EXCELLENT = 0,  // 优秀  
@@ -30,12 +30,12 @@ typedef struct {
 } media_health_stats_t;  
   
 // 介质健康管理接口  
-be_status_t media_health_init(void);  
-be_status_t media_health_update_read_stats(bool success, uint32_t retry_count);  
-be_status_t media_health_update_write_stats(bool success, uint32_t retry_count);  
-be_status_t media_health_update_ecc_stats(uint32_t correctable, uint32_t uncorrectable);  
-be_status_t media_health_update_wear_stats(uint32_t block_index, uint32_t wear_count);  
-be_status_t media_health_get_stats(media_health_stats_t *stats);  
+status_t media_health_init(void);  
+status_t media_health_update_read_stats(bool success, uint32_t retry_count);  
+status_t media_health_update_write_stats(bool success, uint32_t retry_count);  
+status_t media_health_update_ecc_stats(uint32_t correctable, uint32_t uncorrectable);  
+status_t media_health_update_wear_stats(uint32_t block_index, uint32_t wear_count);  
+status_t media_health_get_stats(media_health_stats_t *stats);  
 media_health_level_t media_health_calculate_level(void);  
   
 #endif // MEDIA_HEALTH_H
