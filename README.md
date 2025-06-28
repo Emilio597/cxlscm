@@ -21,6 +21,8 @@ This project implements a complete CXL persistent memory device firmware with fr
 - **ThreadX Version**: 6.4.2
   
 ## Directory Structure
+
+```
 ├── fe/ # Frontend implementation
 │ ├── src/ # Frontend source code
 │ └── inc/ # Frontend headers
@@ -28,5 +30,5 @@ This project implements a complete CXL persistent memory device firmware with fr
 │ ├── src/ # Backend source code
 │ └── inc/ # Backend headers
 ├── cxlscm/ # Common components
-└── common/ # ThreadX core files
-
+└── threadx/common/ # Renamed for clarity, assuming it's ThreadX core
+```
