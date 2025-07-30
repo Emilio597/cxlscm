@@ -1,4 +1,5 @@
 #include "be_common.h"
+#include "bch.h"
 #include "media_manager.h"
 #include "bbm.h"
 #include "address_translation.h"
@@ -33,6 +34,7 @@ void be_main_thread_entry(ULONG thread_input) {
     be_log_print("BE Main Thread Started on Core %d.", (int)thread_input);
     g_be_ctrl.state = STATE_INIT;
     media_manager_init(); bbm_init(); at_init();
+    bch_init();
 
     g_be_ctrl.state = STATE_FORMATTING;
     be_log_print("Blank Drive Format ..."); tx_thread_sleep(10); be_log_print("Blank Drive Format done");
